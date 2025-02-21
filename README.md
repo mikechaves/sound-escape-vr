@@ -134,7 +134,7 @@ Your **chosen track** drives the **wormhole’s color palette** and swirling pat
 ## 📢 Contact & Feedback  
 
 Questions, contributions, or feedback?  
-- **Issues & Requests**: [GitHub Issues](https://github.com/sound-escape-vr/issues)  
+- **Issues & Requests**: [GitHub Issues](https://github.com/mikechaves/sound-escape-vr/issues)  
 - **Email**: mike@digitalhous.com  
 
 > **Immerse yourself in retro synth vibes, harness next-gen VR technology, and let your music reshape reality.**  
