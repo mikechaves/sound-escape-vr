@@ -1,0 +1,54 @@
+{
+    "name": "MenuControls",
+    "maps": [
+        {
+            "name": "UI",
+            "id": "133a83b7-b127-4407-aa4b-dcfc4f8785bc",
+            "actions": [
+                {
+                    "name": "Quit",
+                    "type": "Button",
+                    "id": "aa51df2d-5d2a-44ee-8b49-3f7326732d10",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "StartGame",
+                    "type": "Button",
+                    "id": "cab6ad89-8d0f-49f7-a98c-6d20bf7f634c",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "0da548d5-d344-4aa2-8cd9-521f08524802",
+                    "path": "<OculusTouchController>{RightHand}/thumbstickClicked",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Quit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "2fed597e-d948-4099-b3ae-fbfba3e47f82",
+                    "path": "<OculusTouchController>{RightHand}/primaryButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "StartGame",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
