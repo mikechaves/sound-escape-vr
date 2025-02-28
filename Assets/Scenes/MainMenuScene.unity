@@ -635,6 +635,7 @@ GameObject:
   - component: {fileID: 54932413}
   - component: {fileID: 54932412}
   - component: {fileID: 54932411}
+  - component: {fileID: 54932416}
   m_Layer: 0
   m_Name: '[BuildingBlock] Camera Rig'
   m_TagString: Untagged
@@ -798,6 +799,23 @@ Transform:
   - {fileID: 1166889036}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &54932416
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54932410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b7d4a264b5137c47a517161c54b052b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  XRCameraTransform: {fileID: 0}
+  TrackingOrigin: 2
+  EnablePassthrough: 0
+  EnableWideFOVHandTracking: 1
+  ForceQuestSettings: 0
 --- !u!1 &61205539
 GameObject:
   m_ObjectHideFlags: 0
@@ -10640,6 +10658,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1484367037}
   - component: {fileID: 1484367038}
+  - component: {fileID: 1484367039}
   m_Layer: 0
   m_Name: UIManager
   m_TagString: Untagged
@@ -10675,6 +10694,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04dd3f9d4a86b1248833bfb61de24007, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1484367039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484367036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f103d5d1e6c258042af12da82497efc6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  InputBridgeRef: {fileID: 0}
+  AutoFixOnStart: 1
+  HapticFrequency: 0.3
+  HapticAmplitude: 0.7
+  ThumbstickDeadzoneX: 0.1
+  ThumbstickDeadzoneY: 0.1
 --- !u!1 &1489409843
 GameObject:
   m_ObjectHideFlags: 0

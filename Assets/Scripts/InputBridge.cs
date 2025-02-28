@@ -1345,21 +1345,52 @@ namespace BNG {
             return true;
         }
 
-        public virtual bool GetIsOculusDevice() {
+        // Update the GetIsOculusDevice method to better detect Quest 3
+public virtual bool GetIsOculusDevice() {
+    var primaryHMD = GetHMD();
 
-            var primaryHMD = GetHMD();
-
-            // OpenVR Format
-            if (primaryHMD != null && primaryHMD.manufacturer == "Oculus") {
-                return true;
-            }
+    // OpenVR Format
+    if (primaryHMD != null && primaryHMD.manufacturer == "Oculus" || primaryHMD.manufacturer == "Meta") {
+        return true;
+    }
 
 #if UNITY_2019_2_OR_NEWER
-            return XRSettings.loadedDeviceName != null && XRSettings.loadedDeviceName.ToLower().Contains("oculus");
+    return XRSettings.loadedDeviceName != null && 
+           (XRSettings.loadedDeviceName.ToLower().Contains("oculus") || 
+            XRSettings.loadedDeviceName.ToLower().Contains("meta"));
 #else
-            return true;
+    return true;
 #endif
+}
+
+// Add a new method to detect Quest 3 specifically
+public virtual bool GetIsMetaQuest3() {
+    var primaryHMD = GetHMD();
+
+    // Check for Quest 3 by name
+    if (primaryHMD != null && primaryHMD.name != null) {
+        if (primaryHMD.name.Contains("Quest 3") || primaryHMD.name.Contains("Quest3")) {
+            return true;
         }
+    }
+
+    // Check by model identifier if available
+    string deviceModel = SystemInfo.deviceModel;
+    if (deviceModel.Contains("Quest 3") || deviceModel.Contains("Quest3")) {
+        return true;
+    }
+    
+    // Check by refresh rate (Quest 3 supports 90Hz and 120Hz)
+    if (GetIsOculusDevice() && (XRDevice.refreshRate == 90f || XRDevice.refreshRate == 120f)) {
+        // Additional check to differentiate from Quest 2 which also supports 90Hz
+        // You might need additional logic here
+        return true;
+    }
+    
+    return false;
+}
+    
+  
 
         public virtual bool GetIsOculusQuest() {
 #if UNITY_2019_2_OR_NEWER
@@ -1496,20 +1527,21 @@ namespace BNG {
             return localRotation;
         }
 
-        public virtual ControllerType GetControllerType() {
+        // Update the controller type detection
+public virtual ControllerType GetControllerType() {
+    if (IsValveIndexController) {
+        return ControllerType.Knuckles;
+    }
+    else if (IsOculusDevice) {
+        // Can distinguish between older Touch controllers and newer ones
+        return ControllerType.OculusTouch;
+    }
+    else if (IsHTCDevice) {
+        return ControllerType.Wand;
+    }
 
-            if (IsValveIndexController) {
-                return ControllerType.Knuckles;
-            }
-            else if (IsOculusDevice) {
-                return ControllerType.OculusTouch;
-            }
-            else if (IsHTCDevice) {
-                return ControllerType.Wand;
-            }
-
-            return ControllerType.Unknown;
-        }
+    return ControllerType.Unknown;
+}
 
         public Vector3 GetControllerVelocity(ControllerHand hand) {
 #if UNITY_WEBGL

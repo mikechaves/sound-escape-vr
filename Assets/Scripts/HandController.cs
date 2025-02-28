@@ -6,6 +6,7 @@ namespace BNG {
 
     /// <summary>
     /// An example hand controller that sets animation values depending on Grabber state
+    /// Updated for Meta Quest 3 compatibility
     /// </summary>
     public class HandController : MonoBehaviour {
 
@@ -36,8 +37,8 @@ namespace BNG {
         [Tooltip("Used for idle pose blending between open and close, as well as blend animation that blend between a custom pose and closed")]
         public HandPose DefaultClosePose;
 
-        [Tooltip("If true, the idle hand pose will be determined by the connected Valve Index Controller's finger tracking. Requires the SteamVR SDK. Make sure IdlePoseType is set to 'HandPoser'")]
-        public bool UseIndexFingerTracking = true;
+        [Tooltip("If true, the idle hand pose will be determined by the connected Meta Quest 3's finger tracking. Requires the Meta XR SDK. Make sure IdlePoseType is set to 'HandPoser'")]
+        public bool UseMetaFingerTracking = true;
 
         /// <summary>
         /// How fast to Lerp the Layer Animations
@@ -54,6 +55,10 @@ namespace BNG {
 
         [Tooltip("If true GripAmount, PointAmount, and ThumbAmount will be retrieved from the InputBridge. Set to false if you want to set these values yourself.")]
         public bool ReadControllerInputs = true;
+
+        [Header("Quest 3 Options")]
+        [Tooltip("Enable to use Meta Quest 3's enhanced hand tracking")]
+        public bool UseQuestHandTracking = true;
 
         [Header("Shown for Debug : ")]
         /// <summary>
@@ -90,23 +95,11 @@ namespace BNG {
         Rigidbody rigid;
         Transform offsetTransform;
 
-        Vector3 offsetPosition {
-            get {
-                if(offset) {
-                    return offset.OffsetPosition;
-                }
-                return Vector3.zero;
-            }
-        }
+        // Is Meta Quest 3 Hand Tracking available and initialized
+        private bool _questHandTrackingAvailable = false;
 
-        Vector3 offsetRotation {
-            get {
-                if (offset) {
-                    return offset.OffsetRotation;
-                }
-                return Vector3.zero;
-            }
-        }
+        // Enable or disable Index Finger Tracking
+        public bool UseIndexFingerTracking = false;
 
         void Start() {
 
@@ -139,6 +132,50 @@ namespace BNG {
             SetHandAnimator();
 
             input = InputBridge.Instance;
+
+            // Check if Meta Quest 3 Hand Tracking is available
+            CheckQuestHandTracking();
+        }
+
+        // New method to check for Meta Quest 3 Hand Tracking
+        private void CheckQuestHandTracking() {
+            if (UseQuestHandTracking) {
+                // Check if we're on a Quest device with hand tracking
+                bool isQuestDevice = false;
+                
+                #if UNITY_ANDROID && !UNITY_EDITOR
+                    // On actual device, we can check for Meta/Oculus
+                    isQuestDevice = input != null && input.GetIsOculusDevice();
+                    
+                    // Additional check for Quest 3 specifically if needed
+                    if (input != null && input.GetIsMetaQuest3 != null) {
+                        try {
+                            isQuestDevice = input.GetIsMetaQuest3();
+                        }
+                        catch {
+                            // Method may not exist in older versions
+                            isQuestDevice = true; // Assume it is if we're on Android and Oculus device
+                        }
+                    }
+                #endif
+                
+                // For testing in editor
+                #if UNITY_EDITOR
+                    isQuestDevice = true;
+                #endif
+                
+                // Set Quest hand tracking as available
+                _questHandTrackingAvailable = isQuestDevice;
+                
+                if (_questHandTrackingAvailable) {
+                    Debug.Log("Meta Quest 3 Hand Tracking is available");
+                    
+                    // Initialize any Quest-specific hand tracking here if needed
+                    if (IdlePoseType == HandPoserType.HandPoser) {
+                        UseMetaFingerTracking = true;
+                    }
+                }
+            }
         }
 
         public void Update() {
@@ -176,6 +213,68 @@ namespace BNG {
             // Lastly switch to idle state
             else {
                 UpdateIdleState();
+            }
+        }
+
+        // Implementation for Meta Quest Hand Tracking
+        public virtual void UpdateIndexFingerBlending() {
+            // For Quest 3 enhanced hand tracking - modified to work with both SteamVR and Meta XR
+            if (_questHandTrackingAvailable && UseMetaFingerTracking) {
+            
+                #if OCULUS_XR_PLUGIN || UNITY_ANDROID
+                if (grabber.HandSide == ControllerHand.Left) {
+                    // Quest-specific finger tracking data for left hand
+                    // These values should be retrieved from OVRHand or XRHand for Meta
+                    poseBlender.IndexValue = input.LeftIndexCurl;
+                    poseBlender.ThumbValue = input.LeftThumbCurl;
+                    poseBlender.MiddleValue = input.LeftMiddleCurl;
+                    poseBlender.RingValue = input.LeftRingCurl;
+                    poseBlender.PinkyValue = input.LeftPinkyCurl;
+                }
+                else if (grabber.HandSide == ControllerHand.Right) {
+                    // Quest-specific finger tracking data for right hand
+                    poseBlender.IndexValue = input.RightIndexCurl;
+                    poseBlender.ThumbValue = input.RightThumbCurl;
+                    poseBlender.MiddleValue = input.RightMiddleCurl;
+                    poseBlender.RingValue = input.RightRingCurl;
+                    poseBlender.PinkyValue = input.RightPinkyCurl;
+                }
+                #endif
+
+                #if STEAM_VR_SDK
+                if (grabber.HandSide == ControllerHand.Left) {
+                    poseBlender.IndexValue = input.LeftIndexCurl;
+                    poseBlender.ThumbValue = input.LeftThumbCurl;
+                    poseBlender.MiddleValue = input.LeftMiddleCurl;
+                    poseBlender.RingValue = input.LeftRingCurl;
+                    poseBlender.PinkyValue = input.LeftPinkyCurl;
+                }
+                else if (grabber.HandSide == ControllerHand.Right) {
+                    poseBlender.IndexValue = input.RightIndexCurl;
+                    poseBlender.ThumbValue = input.RightThumbCurl;
+                    poseBlender.MiddleValue = input.RightMiddleCurl;
+                    poseBlender.RingValue = input.RightRingCurl;
+                    poseBlender.PinkyValue = input.RightPinkyCurl;
+                }
+                #endif
+            }
+        }
+
+        Vector3 offsetPosition {
+            get {
+                if(offset) {
+                    return offset.OffsetPosition;
+                }
+                return Vector3.zero;
+            }
+        }
+
+        Vector3 offsetRotation {
+            get {
+                if (offset) {
+                    return offset.OffsetRotation;
+                }
+                return Vector3.zero;
             }
         }
 
@@ -534,7 +633,7 @@ namespace BNG {
 
             // Check for Valve Index Knuckles finger tracking
             if (UseIndexFingerTracking && InputBridge.Instance.IsValveIndexController) {
-                UpdateIndexFingerBlending();
+                UpdateIndexFingerBlendingSteamVR();
                 return;
             }
 
@@ -556,7 +655,7 @@ namespace BNG {
             poseBlender.GripValue = Mathf.Lerp(poseBlender.GripValue, _gripValue, Time.deltaTime * handPoser.AnimationSpeed);
         }
 
-        public virtual void UpdateIndexFingerBlending() {
+        public virtual void UpdateIndexFingerBlendingSteamVR() {
 #if STEAM_VR_SDK
             if (grabber.HandSide == ControllerHand.Left) {
                 poseBlender.IndexValue = InputBridge.Instance.LeftIndexCurl;

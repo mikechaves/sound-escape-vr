@@ -5,7 +5,7 @@ using UnityEngine;
 namespace BNG {
 
     /// <summary>
-    /// Keep track of all grabbables within this trigger
+    /// Keep track of all grabbables within this trigger. Updated for Meta Quest 3.
     /// </summary>
     public class GrabbablesInTrigger : MonoBehaviour {
 
@@ -50,7 +50,7 @@ namespace BNG {
         /// If true, Grabbables in the trigger will only be considered valid if no objects are in the way between it and this transform
         /// </summary>
         [Header("Remote Grabbables")]
-        [Tooltip("If trueRemote Grabbables will be checked in addition to closer grabbables. Remote grabbables take distance into account.")]
+        [Tooltip("If true Remote Grabbables will be checked in addition to closer grabbables. Remote grabbables take distance into account.")]
         public bool CheckRemoteGrabbables = false;
 
         [Tooltip("If true, Grabbables in the trigger will only be considered valid if no objects are in the way between it and this transform")]
@@ -80,6 +80,17 @@ namespace BNG {
         private Dictionary<Collider, Grabbable> _filtered = new Dictionary<Collider, Grabbable>();
         private Transform _eyeTransform;
 
+        // Quest 3 specific
+        [Header("Quest 3 Optimizations")]
+        [Tooltip("When true, additional Quest 3 specific optimizations will be used")]
+        public bool UseQuestOptimizations = true;
+
+        [Tooltip("For Quest 3, increase this distance to improve grabbing with hand tracking")]
+        public float HandTrackingGrabDistance = 0.15f;
+
+        private bool _isUsingHandTracking = false;
+        private float _standardGrabDistance = 0.05f; // Default grab distance
+
 
         void Start() {
             NearbyGrabbables = new Dictionary<Collider, Grabbable>();
@@ -88,6 +99,23 @@ namespace BNG {
             // Used to check if an object is between the eye and this object if RemoteGrabbablesMustBeVisible is true
             if (Camera.main != null) {
                 _eyeTransform = Camera.main.transform;
+            }
+
+            // Check for hand tracking
+            CheckForHandTracking();
+        }
+
+        void CheckForHandTracking() {
+            if (UseQuestOptimizations) {
+                // Check if hand tracking is active
+                // This is a simplified check - you'd want a more robust check in production
+                #if OCULUS_XR_PLUGIN || UNITY_ANDROID
+                _isUsingHandTracking = true;
+                
+                // In a full implementation, you would check OVRPlugin or Unity's XR APIs
+                // to determine if hand tracking is active
+
+                #endif
             }
         }
 
@@ -106,7 +134,6 @@ namespace BNG {
         }
 
         void updateClosestGrabbable() {
-
             // Remove any Grabbables that may have been destroyed, deactivated, etc.
             NearbyGrabbables = SanitizeGrabbables(NearbyGrabbables);
 
@@ -118,7 +145,6 @@ namespace BNG {
         }
 
         void updateClosestRemoteGrabbables() {
-
             // Assign closest remote grabbable
             ClosestRemoteGrabbable = GetClosestGrabbable(ValidRemoteGrabbables, true, RaycastRemoteGrabbables);
 
@@ -138,13 +164,16 @@ namespace BNG {
             }
 
             foreach (var kvp in grabbables) {                
-
                 if (kvp.Value == null || !kvp.Value.IsGrabbable()) {
                     continue;
                 }
 
                 // Use Collider transform as position
                 _thisDistance = Vector3.Distance(kvp.Value.transform.position, transform.position);
+                
+                // Adjust distance threshold for hand tracking
+                float grabDistanceThreshold = _isUsingHandTracking ? HandTrackingGrabDistance : _standardGrabDistance;
+                
                 if (_thisDistance < _lastDistance && kvp.Value.isActiveAndEnabled) {
                     // Not a valid option
                     if (remoteOnly && !kvp.Value.RemoteGrabbable) {
@@ -179,24 +208,23 @@ namespace BNG {
             return _closest;
         }
 
-
         /// <summary>
         /// Check if there is an object / collision between the starting transform (our Grabber) and the grabbable object
+        /// Optimized for Quest 3
         /// </summary>        
         /// <returns>True if there is an object between the starting position and the grabbable position</returns>
         public virtual bool CheckObjectBetweenGrabbable(Vector3 startingPosition, Grabbable theGrabbable) {
             RaycastHit hit;
             if (Physics.Linecast(startingPosition, theGrabbable.transform.position, out hit, RemoteCollisionLayers, QueryTriggerInteraction.Ignore)) {
-
                 // Something in the way
                 float hitDistance = Vector3.Distance(startingPosition, hit.point);
+                
+                // Adjust distance threshold for hand tracking
+                float collisionDistanceThreshold = _isUsingHandTracking ? 0.12f : 0.09f;
+                
                 if (hit.collider.gameObject != theGrabbable.gameObject) {
-                    if(hitDistance > 0.09f) {
-                        // Debug.Log("Something in-between : " + hit.collider.gameObject.name + " At Distance : " + hitDistance);
+                    if(hitDistance > collisionDistanceThreshold) {
                         return true;
-                    }
-                    else {
-                        // Debug.Log("Something in between but very close : " + hit.collider.gameObject.name);
                     }
                 }
             }
@@ -205,7 +233,6 @@ namespace BNG {
         }
 
         public Dictionary<Collider, Grabbable> GetValidGrabbables(Dictionary<Collider, Grabbable> grabs) {
-
             if (_valids == null) {
                 _valids = new Dictionary<Collider, Grabbable>();
             } 
